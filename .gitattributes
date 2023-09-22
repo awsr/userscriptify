@@ -1,0 +1,7 @@
+*                 text=auto
+
+*.css             text eol=lf diff=css
+*.scss            text eol=lf diff=css
+*.ts              text eol=lf
+*.js              text eol=lf
+*.json            text eol=lf
