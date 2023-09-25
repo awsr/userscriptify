@@ -58,14 +58,10 @@ function formatProp(header: string) {
 
 async function insertMetadata(contents: string, config: UserScriptData) {
   const info = await readFile(config.meta, 'utf8').then(file => JSON.parse(file));
-  const maxKeyLength = Math.max(...(Object.keys(info).map((k) => formatProp(k).length)));
+  const maxKeyLength = Object.keys(info).reduce((a, c) => Math.max(a, formatProp(c).length), 8);
   const metadata = ["// ==UserScript=="];
-  for (let [key, value] of Object.entries(info)) {
-    if (key === "version") {
-      value = config.version;
-    }
-
-    if (!value) continue;
+  for (let [key, value] of Object.entries(info)) {  // eslint-disable-line prefer-const
+    if (key === "version" || !value) continue;
 
     key = formatProp(key);
     if (Array.isArray(value)) {
@@ -77,6 +73,9 @@ async function insertMetadata(contents: string, config: UserScriptData) {
       metadata.push(`// ${key.padEnd(maxKeyLength + 2)}${value}`);
     }
   }
+  // Insert version number into 3rd line
+  metadata.splice(Math.min(2, metadata.length), 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
+
   metadata.push("// ==/UserScript==", "\n");
   contents = metadata.join("\n") + contents;
   return contents;
