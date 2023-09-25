@@ -87,7 +87,7 @@ async function insertCSS(contents: string, config: UserScriptData) {
     let cssArray: string[] = [];
     if (config.style) {
       if (config.style.match(/\.s[ac]ss$/i)) {
-        stdout.write("Compiling SCSS... ");
+        stdout.write("Compiling SASS/SCSS... ");
         cssArray = sasscompile(config.style).css.split("\n");
         console.log("Done");
       }
