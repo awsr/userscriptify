@@ -32,24 +32,25 @@ function applyOptions(config, object) {
   config.style = object.style || config.style;
   config.styleRaw = object.styleRaw || config.styleRaw;
 }
+function formatProp(header) {
+  return header.startsWith("@") ? header : "@" + header;
+}
 async function insertMetadata(contents, config) {
   const info = await readFile(config.meta, "utf8").then((file) => JSON.parse(file));
-  const maxKeyLength = Math.max(...Object.keys(info).map((k) => k.length));
+  const maxKeyLength = Math.max(...Object.keys(info).map((k) => formatProp(k).length));
   const metadata = ["// ==UserScript=="];
   for (let [key, value] of Object.entries(info)) {
     if (key === "version") {
       value = config.version;
     }
     if (!value) continue;
-    if (!key.startsWith("@")) {
-      key = "@" + key;
-    }
+    key = formatProp(key);
     if (Array.isArray(value)) {
       for (const v of value) {
-        metadata.push(`// ${key.padEnd(maxKeyLength + 3)}${v}`);
+        metadata.push(`// ${key.padEnd(maxKeyLength + 2)}${v}`);
       }
     } else {
-      metadata.push(`// ${key.padEnd(maxKeyLength + 3)}${value}`);
+      metadata.push(`// ${key.padEnd(maxKeyLength + 2)}${value}`);
     }
   }
   metadata.push("// ==/UserScript==", "\n");
