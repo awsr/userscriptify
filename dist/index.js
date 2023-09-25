@@ -37,10 +37,13 @@ function formatProp(header) {
 }
 async function insertMetadata(contents, config) {
   const info = await readFile(config.meta, "utf8").then((file) => JSON.parse(file));
+  if (!("name" in info || "@name" in info)) {
+    throw new Error(`${config.meta} must contain a name.`);
+  }
   const maxKeyLength = Object.keys(info).reduce((a, c) => Math.max(a, formatProp(c).length), 8);
   const metadata = ["// ==UserScript=="];
+  // eslint-disable-next-line prefer-const
   for (let [key, value] of Object.entries(info)) {
-    // eslint-disable-line prefer-const
     if (key === "version" || !value) continue;
     key = formatProp(key);
     if (Array.isArray(value)) {
@@ -52,11 +55,7 @@ async function insertMetadata(contents, config) {
     }
   }
   // Insert version number into 3rd line
-  metadata.splice(
-    Math.min(2, metadata.length),
-    0,
-    `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`,
-  );
+  metadata.splice(2, 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
   metadata.push("// ==/UserScript==", "\n");
   contents = metadata.join("\n") + contents;
   return contents;
