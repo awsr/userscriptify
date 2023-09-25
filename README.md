@@ -1,2 +1,2 @@
-# userscripter
+# userscriptify
  Build script for compiling userscripts
