@@ -7,8 +7,8 @@ export interface USOptions {
   meta: string;
   replace: string;
   indent: number;
-  style: string | undefined;
-  styleRaw: string | undefined;
+  style?: string;
+  styleRaw?: string;
 }
 
 interface UserScriptData extends USOptions {
@@ -29,6 +29,7 @@ export async function userscriptify(content: string, options: undefined | Partia
   const config = Object.assign({}, defaultConfig);
   await applyPackageData(config);
   if (options) {
+    // Options passed through loader script override settings in package.json
     applyOptions(config, options);
   }
   return await insertCSS(content, config)
@@ -80,7 +81,7 @@ async function insertMetadata(contents: string, config: UserScriptData) {
   // Insert version number into 3rd line
   metadata.splice(2, 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
 
-  metadata.push("// ==/UserScript==", "\n");
+  metadata.push("// ==/UserScript==\n\n");
   contents = metadata.join("\n") + contents;
   return contents;
 }
