@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { stdout } from "node:process";
 import { compile as sasscompile } from "sass";
 const defaultConfig = {
-  meta: "meta.json",
+  metadata: "meta.json",
   replace: "__<INSERTCSS>__",
   indent: 2,
   style: undefined,
@@ -13,6 +13,7 @@ export async function userscriptify(content, options = undefined) {
   const config = Object.assign({}, defaultConfig);
   await applyPackageData(config);
   if (options) {
+    // Options passed through loader script override settings in package.json
     applyOptions(config, options);
   }
   return await insertCSS(content, config).then((contents) => insertMetadata(contents, config));
@@ -26,42 +27,65 @@ async function applyPackageData(config) {
   config.version = packageData.version;
 }
 function applyOptions(config, object) {
-  config.meta = object.meta || config.meta;
-  config.replace = object.replace || config.replace;
-  config.indent = object.indent || config.indent;
-  config.style = object.style || config.style;
-  config.styleRaw = object.styleRaw || config.styleRaw;
+  for (const prop in config) {
+    if (prop === "version") continue; // Version isn't set through options object
+    config[prop] = object[prop] || config[prop];
+  }
 }
 function formatProp(header) {
   return header.startsWith("@") ? header : "@" + header;
 }
 async function insertMetadata(contents, config) {
-  const info = await readFile(config.meta, "utf8").then((file) => JSON.parse(file));
-  if (!("name" in info || "@name" in info)) {
-    throw new Error(`${config.meta} must contain a name.`);
+  let metadataInfo;
+  if (typeof config.metadata == "string") {
+    metadataInfo = await readFile(config.metadata.trim(), "utf8").then((file) => JSON.parse(file));
+  } else {
+    metadataInfo = config.metadata;
   }
-  const maxKeyLength = Object.keys(info).reduce((a, c) => Math.max(a, formatProp(c).length), 8);
-  const metadata = ["// ==UserScript=="];
+  if (!("name" in metadataInfo || "@name" in metadataInfo)) {
+    throw new Error(`Userscript metadata information must contain a name.`);
+  }
+  const maxKeyLength = Object.keys(metadataInfo).reduce(
+    (a, c) => Math.max(a, formatProp(c).length),
+    10,
+  );
+  const scriptMetadata = ["// ==UserScript=="];
   // eslint-disable-next-line prefer-const
-  for (let [key, value] of Object.entries(info)) {
-    if (key === "version" || !value) continue;
+  for (let [key, value] of Object.entries(metadataInfo)) {
+    if (!value) continue;
     key = formatProp(key);
     if (Array.isArray(value)) {
       for (const v of value) {
-        metadata.push(`// ${key.padEnd(maxKeyLength + 2)}${v}`);
+        scriptMetadata.push(`// ${key.padEnd(maxKeyLength + 2)}${v}`);
       }
     } else {
-      metadata.push(`// ${key.padEnd(maxKeyLength + 2)}${value}`);
+      scriptMetadata.push(`// ${key.padEnd(maxKeyLength + 2)}${value}`);
     }
   }
-  // Insert version number into 3rd line
-  metadata.splice(2, 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
-  metadata.push("// ==/UserScript==", "\n");
-  contents = metadata.join("\n") + contents;
+  // Explicit version number takes priority over the inferred one from package.json
+  if (!("version" in metadataInfo || "@version" in metadataInfo)) {
+    // Insert version number into 3rd line
+    scriptMetadata.splice(2, 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
+  }
+  // Insert default namespace entry into 4th line if not provided
+  if (!("namespace" in metadataInfo || "@namespace" in metadataInfo)) {
+    scriptMetadata.splice(
+      3,
+      0,
+      `// ${"@namespace".padEnd(maxKeyLength + 2)}http://tampermonkey.net`,
+    );
+  }
+  scriptMetadata.push("// ==/UserScript==\n\n");
+  contents = scriptMetadata.join("\n") + contents;
   return contents;
 }
 async function insertCSS(contents, config) {
-  if ((config.style || config.styleRaw) && contents.includes(config.replace)) {
+  // Check if CSS styles are provided
+  if (config.style || config.styleRaw) {
+    if (!contents.includes(config.replace)) {
+      console.error(`Style information is provided, but '${config.replace}' was not found`);
+      return contents;
+    }
     let cssArray = [];
     if (config.style) {
       if (config.style.match(/\.s[ac]ss$/i)) {
