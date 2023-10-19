@@ -46,11 +46,10 @@ async function applyPackageData(config: UserScriptData) {
 }
 
 function applyOptions(config: UserScriptData, object: Partial<USOptions>) {
-  config.meta = object.meta || config.meta;
-  config.replace = object.replace || config.replace;
-  config.indent = object.indent || config.indent;
-  config.style = object.style || config.style;
-  config.styleRaw = object.styleRaw || config.styleRaw;
+  for (const prop in config) {
+    if (prop === "version") continue; // Version isn't set through options object
+    config[prop] = object[prop] || config[prop];
+  }
 }
 
 function formatProp(header: string) {
