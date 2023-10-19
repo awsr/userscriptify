@@ -4,7 +4,7 @@ import { compile as sasscompile } from "sass";
 
 
 export interface USOptions {
-  meta: string;
+  meta: string | object;
   replace: string;
   indent: number;
   style?: string;
@@ -57,10 +57,18 @@ function formatProp(header: string) {
 }
 
 async function insertMetadata(contents: string, config: UserScriptData) {
-  const info = await readFile(config.meta, 'utf8').then(file => JSON.parse(file));
-  if (!("name" in info || "@name" in info)) {
-    throw new Error(`${config.meta} must contain a name.`);
+  let info;
+  if (typeof config.meta == "string") {
+    info = await readFile(config.meta.trim(), 'utf8').then(file => JSON.parse(file));
   }
+  else {
+    info = config.meta;
+  }
+
+  if (!("name" in info || "@name" in info)) {
+    throw new Error(`Userscript metadata information must contain a name.`);
+  }
+
   const maxKeyLength = Object.keys(info).reduce((a, c) => Math.max(a, formatProp(c).length), 10);
   const metadata = ["// ==UserScript=="];
   // eslint-disable-next-line prefer-const
