@@ -57,47 +57,47 @@ function formatProp(header: string) {
 }
 
 async function insertMetadata(contents: string, config: UserScriptData) {
-  let info;
+  let metadataInfo;
   if (typeof config.meta == "string") {
-    info = await readFile(config.meta.trim(), 'utf8').then(file => JSON.parse(file));
+    metadataInfo = await readFile(config.meta.trim(), 'utf8').then(file => JSON.parse(file));
   }
   else {
-    info = config.meta;
+    metadataInfo = config.meta;
   }
 
-  if (!("name" in info || "@name" in info)) {
+  if (!("name" in metadataInfo || "@name" in metadataInfo)) {
     throw new Error(`Userscript metadata information must contain a name.`);
   }
 
-  const maxKeyLength = Object.keys(info).reduce((a, c) => Math.max(a, formatProp(c).length), 10);
-  const metadata = ["// ==UserScript=="];
+  const maxKeyLength = Object.keys(metadataInfo).reduce((a, c) => Math.max(a, formatProp(c).length), 10);
+  const scriptMetadata = ["// ==UserScript=="];
   // eslint-disable-next-line prefer-const
-  for (let [key, value] of Object.entries(info)) {
+  for (let [key, value] of Object.entries(metadataInfo)) {
     if (!value) continue;
 
     key = formatProp(key);
     if (Array.isArray(value)) {
       for (const v of value) {
-        metadata.push(`// ${key.padEnd(maxKeyLength + 2)}${v}`);
+        scriptMetadata.push(`// ${key.padEnd(maxKeyLength + 2)}${v}`);
       }
     }
     else {
-      metadata.push(`// ${key.padEnd(maxKeyLength + 2)}${value}`);
+      scriptMetadata.push(`// ${key.padEnd(maxKeyLength + 2)}${value}`);
     }
   }
   // Explicit version number takes priority over the inferred one from package.json
-  if (!("version" in info || "@version" in info)) {
+  if (!("version" in metadataInfo || "@version" in metadataInfo)) {
     // Insert version number into 3rd line
-    metadata.splice(2, 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
+    scriptMetadata.splice(2, 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
   }
 
   // Insert default namespace entry into 4th line if not provided
-  if (!("namespace" in info || "@namespace" in info)) {
-    metadata.splice(3, 0, `// ${"@namespace".padEnd(maxKeyLength + 2)}http://tampermonkey.net`);
+  if (!("namespace" in metadataInfo || "@namespace" in metadataInfo)) {
+    scriptMetadata.splice(3, 0, `// ${"@namespace".padEnd(maxKeyLength + 2)}http://tampermonkey.net`);
   }
 
-  metadata.push("// ==/UserScript==\n\n");
-  contents = metadata.join("\n") + contents;
+  scriptMetadata.push("// ==/UserScript==\n\n");
+  contents = scriptMetadata.join("\n") + contents;
   return contents;
 }
 
