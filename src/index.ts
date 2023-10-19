@@ -62,7 +62,7 @@ async function insertMetadata(contents: string, config: UserScriptData) {
   if (!("name" in info || "@name" in info)) {
     throw new Error(`${config.meta} must contain a name.`);
   }
-  const maxKeyLength = Object.keys(info).reduce((a, c) => Math.max(a, formatProp(c).length), 8);
+  const maxKeyLength = Object.keys(info).reduce((a, c) => Math.max(a, formatProp(c).length), 10);
   const metadata = ["// ==UserScript=="];
   // eslint-disable-next-line prefer-const
   for (let [key, value] of Object.entries(info)) {
@@ -80,6 +80,11 @@ async function insertMetadata(contents: string, config: UserScriptData) {
   }
   // Insert version number into 3rd line
   metadata.splice(2, 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
+
+  // Insert default namespace entry into 4th line if not provided
+  if (!("namespace" in info || "@namespace" in info)) {
+    metadata.splice(3, 0, `// ${"@namespace".padEnd(maxKeyLength + 2)}http://tampermonkey.net`);
+  }
 
   metadata.push("// ==/UserScript==\n\n");
   contents = metadata.join("\n") + contents;
