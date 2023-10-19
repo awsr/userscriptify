@@ -65,7 +65,7 @@ async function insertMetadata(contents: string, config: UserScriptData) {
   const metadata = ["// ==UserScript=="];
   // eslint-disable-next-line prefer-const
   for (let [key, value] of Object.entries(info)) {
-    if (key === "version" || !value) continue;
+    if (!value) continue;
 
     key = formatProp(key);
     if (Array.isArray(value)) {
@@ -77,8 +77,11 @@ async function insertMetadata(contents: string, config: UserScriptData) {
       metadata.push(`// ${key.padEnd(maxKeyLength + 2)}${value}`);
     }
   }
-  // Insert version number into 3rd line
-  metadata.splice(2, 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
+  // Explicit version number takes priority over the inferred one from package.json
+  if (!("version" in info || "@version" in info)) {
+    // Insert version number into 3rd line
+    metadata.splice(2, 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
+  }
 
   // Insert default namespace entry into 4th line if not provided
   if (!("namespace" in info || "@namespace" in info)) {
