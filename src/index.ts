@@ -91,7 +91,12 @@ async function insertMetadata(contents: string, config: UserScriptData) {
 }
 
 async function insertCSS(contents: string, config: UserScriptData) {
-  if ((config.style || config.styleRaw) && contents.includes(config.replace)) {
+  // Check if CSS styles are provided
+  if ((config.style || config.styleRaw)) {
+    if (!contents.includes(config.replace)) {
+      console.error(`Style information is provided, but '${config.replace}' was not found`);
+      return contents;
+    }
     let cssArray: string[] = [];
     if (config.style) {
       if (config.style.match(/\.s[ac]ss$/i)) {
