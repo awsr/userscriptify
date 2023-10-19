@@ -4,7 +4,7 @@ import { compile as sasscompile } from "sass";
 
 
 export interface USOptions {
-  meta: string | object;
+  metadata: string | object;
   replace: string;
   indent: number;
   style?: string;
@@ -16,7 +16,7 @@ interface UserScriptData extends USOptions {
 }
 
 const defaultConfig: UserScriptData = {
-  meta: "meta.json",
+  metadata: "meta.json",
   replace: "__<INSERTCSS>__",
   indent: 2,
   style: undefined,
@@ -58,11 +58,11 @@ function formatProp(header: string) {
 
 async function insertMetadata(contents: string, config: UserScriptData) {
   let metadataInfo;
-  if (typeof config.meta == "string") {
-    metadataInfo = await readFile(config.meta.trim(), 'utf8').then(file => JSON.parse(file));
+  if (typeof config.metadata == "string") {
+    metadataInfo = await readFile(config.metadata.trim(), 'utf8').then(file => JSON.parse(file));
   }
   else {
-    metadataInfo = config.meta;
+    metadataInfo = config.metadata;
   }
 
   if (!("name" in metadataInfo || "@name" in metadataInfo)) {
