@@ -79,6 +79,10 @@ function insertMetadata(contents, config) {
   if (!("namespace" in metadataInfo || "@namespace" in metadataInfo)) {
     scriptMetadata.splice(3, 0, metadataEntry("@namespace", "http://tampermonkey.net"));
   }
+  // Insert "// @grant  none" at the end if no "grant" value provided
+  if (!("grant" in metadataInfo || "@grant" in metadataInfo)) {
+    scriptMetadata.push(metadataEntry("@grant", "none"));
+  }
   scriptMetadata.push("// ==/UserScript==\n\n");
   contents = scriptMetadata.join("\n") + contents;
   return contents;
