@@ -33,7 +33,7 @@ function applyPackageData(config) {
 }
 function applyOptions(config, object) {
   for (const prop in config) {
-    if (prop === "version") continue; // Version isn't set through options object
+    if (prop === "version") continue; // Version is just a placeholder for later
     config[prop] = object[prop] || config[prop];
   }
 }

@@ -55,7 +55,7 @@ function applyPackageData(config: UserScriptData) {
 
 function applyOptions(config: UserScriptData, object: UserscriptifyOptions) {
   for (const prop in config) {
-    if (prop === "version") continue; // Version isn't set through options object
+    if (prop === "version") continue; // Version is just a placeholder for later
     config[prop] = object[prop] || config[prop];
   }
 }
