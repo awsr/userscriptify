@@ -92,7 +92,9 @@ function insertCSS(contents, config) {
       return contents;
     }
     let cssArray = [];
-    if (config.style) {
+    if (config.styleRaw) {
+      cssArray = config.styleRaw.split("\n");
+    } else if (config.style) {
       if (config.style.match(/\.s[ac]ss$/i)) {
         stdout.write("Compiling SASS/SCSS... ");
         cssArray = sasscompile(config.style).css.split("\n");
@@ -100,8 +102,6 @@ function insertCSS(contents, config) {
       } else {
         cssArray = readFileSync(config.style, "utf8").split("\n");
       }
-    } else if (config.styleRaw) {
-      cssArray = config.styleRaw.split("\n");
     }
     // TODO: Auto-detect indentation
     if (cssArray.length) {
