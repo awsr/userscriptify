@@ -3,15 +3,18 @@ import { stdout } from "node:process";
 import { compile as sasscompile } from "sass";
 
 
-export interface USOptions {
-  metadata: string | object;
-  replace: string;
-  indent: number;
+export interface UserscriptifyOptions {
+  metadata?: string | object;
+  replace?: string;
+  indent?: number;
   style?: string;
   styleRaw?: string;
 }
 
-interface UserScriptData extends USOptions {
+interface UserScriptData extends UserscriptifyOptions {
+  metadata: string | object;
+  replace: string;
+  indent: number;
   version: string;
 }
 
@@ -25,7 +28,7 @@ const defaultConfig: UserScriptData = {
 };
 
 
-export function userscriptify(content: string, options: undefined | Partial<USOptions> = undefined) {
+export function userscriptify(content: string, options: undefined | UserscriptifyOptions = undefined) {
   const config = Object.assign({}, defaultConfig);
   applyPackageData(config);
   if (options) {
@@ -37,20 +40,20 @@ export function userscriptify(content: string, options: undefined | Partial<USOp
   return content
 }
 
-export async function userscriptifyAsync(content: string, options: undefined | Partial<USOptions> = undefined) {
+export async function userscriptifyAsync(content: string, options: undefined | UserscriptifyOptions = undefined) {
   return userscriptify(content, options);
 }
 
 function applyPackageData(config: UserScriptData) {
   const packageData = JSON.parse(readFileSync("package.json", "utf8"));
   if ("userscriptify" in packageData) {
-    const pkg = packageData.userscriptify as Partial<USOptions>;
+    const pkg = packageData.userscriptify as UserscriptifyOptions;
     applyOptions(config, pkg);
   }
   config.version = packageData.version as string;
 }
 
-function applyOptions(config: UserScriptData, object: Partial<USOptions>) {
+function applyOptions(config: UserScriptData, object: UserscriptifyOptions) {
   for (const prop in config) {
     if (prop === "version") continue; // Version isn't set through options object
     config[prop] = object[prop] || config[prop];

@@ -1,6 +1,6 @@
 {
   "name": "userscriptify",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Build setup for making userscripts",
   "main": "./dist/index.js",
   "type": "module",
