@@ -48,6 +48,7 @@ export async function userscriptifyAsync(content: string, options: undefined | U
   return userscriptify(content, options);
 }
 
+
 function applyPackageData(config: UserScriptData) {
   const packageData = JSON.parse(readFileSync("package.json", "utf8"));
   if ("userscriptify" in packageData) {
