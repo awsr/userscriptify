@@ -12,7 +12,7 @@ export interface UserscriptifyOptions {
 }
 
 interface UserScriptData extends UserscriptifyOptions {
-  metadata: string | object;
+  metadata: string | MetadataInfo;
   replace: string;
   indent: number;
   version: string;
@@ -26,6 +26,10 @@ const defaultConfig: UserScriptData = {
   styleRaw: undefined,
   version: "1.0.0"
 };
+
+interface MetadataInfo {
+  [key: string]: string | string[]
+}
 
 
 export function userscriptify(content: string, options: undefined | UserscriptifyOptions = undefined) {
@@ -60,12 +64,16 @@ function applyOptions(config: UserScriptData, object: UserscriptifyOptions) {
   }
 }
 
-function formatProp(header: string) {
+function formatHeader(header: string) {
   return header.startsWith("@") ? header : "@" + header;
 }
 
 function insertMetadata(contents: string, config: UserScriptData) {
-  let metadataInfo;
+  let metadataInfo: MetadataInfo;
+  function metadataEntry(header: string, value: string) {
+    return "// " + header.padEnd(maxKeyLength + 2) + value;
+  }
+  
   if (typeof config.metadata == "string") {
     metadataInfo = JSON.parse(readFileSync(config.metadata.trim(), "utf8"));
   }
@@ -74,34 +82,34 @@ function insertMetadata(contents: string, config: UserScriptData) {
   }
 
   if (!("name" in metadataInfo || "@name" in metadataInfo)) {
-    throw new Error(`Userscript metadata information must contain a name.`);
+    throw new Error("Userscript metadata information must contain a name.");
   }
 
-  const maxKeyLength = Object.keys(metadataInfo).reduce((a, c) => Math.max(a, formatProp(c).length), 10);
+  const maxKeyLength = Object.keys(metadataInfo).reduce((a, c) => Math.max(a, formatHeader(c).length), 10);
   const scriptMetadata = ["// ==UserScript=="];
   // eslint-disable-next-line prefer-const
   for (let [key, value] of Object.entries(metadataInfo)) {
     if (!value) continue;
 
-    key = formatProp(key);
+    key = formatHeader(key);
     if (Array.isArray(value)) {
       for (const v of value) {
-        scriptMetadata.push(`// ${key.padEnd(maxKeyLength + 2)}${v}`);
+        scriptMetadata.push(metadataEntry(key, v));
       }
     }
     else {
-      scriptMetadata.push(`// ${key.padEnd(maxKeyLength + 2)}${value}`);
+      scriptMetadata.push(metadataEntry(key, value));
     }
   }
   // Explicit version number takes priority over the inferred one from package.json
   if (!("version" in metadataInfo || "@version" in metadataInfo)) {
     // Insert version number into 3rd line
-    scriptMetadata.splice(2, 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
+    scriptMetadata.splice(2, 0, metadataEntry("@version", config.version));
   }
 
   // Insert default namespace entry into 4th line if not provided
   if (!("namespace" in metadataInfo || "@namespace" in metadataInfo)) {
-    scriptMetadata.splice(3, 0, `// ${"@namespace".padEnd(maxKeyLength + 2)}http://tampermonkey.net`);
+    scriptMetadata.splice(3, 0, metadataEntry("@namespace", "http://tampermonkey.net"));
   }
 
   scriptMetadata.push("// ==/UserScript==\n\n");

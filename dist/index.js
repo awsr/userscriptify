@@ -37,48 +37,47 @@ function applyOptions(config, object) {
     config[prop] = object[prop] || config[prop];
   }
 }
-function formatProp(header) {
+function formatHeader(header) {
   return header.startsWith("@") ? header : "@" + header;
 }
 function insertMetadata(contents, config) {
   let metadataInfo;
+  function metadataEntry(header, value) {
+    return "// " + header.padEnd(maxKeyLength + 2) + value;
+  }
   if (typeof config.metadata == "string") {
     metadataInfo = JSON.parse(readFileSync(config.metadata.trim(), "utf8"));
   } else {
     metadataInfo = config.metadata;
   }
   if (!("name" in metadataInfo || "@name" in metadataInfo)) {
-    throw new Error(`Userscript metadata information must contain a name.`);
+    throw new Error("Userscript metadata information must contain a name.");
   }
   const maxKeyLength = Object.keys(metadataInfo).reduce(
-    (a, c) => Math.max(a, formatProp(c).length),
+    (a, c) => Math.max(a, formatHeader(c).length),
     10,
   );
   const scriptMetadata = ["// ==UserScript=="];
   // eslint-disable-next-line prefer-const
   for (let [key, value] of Object.entries(metadataInfo)) {
     if (!value) continue;
-    key = formatProp(key);
+    key = formatHeader(key);
     if (Array.isArray(value)) {
       for (const v of value) {
-        scriptMetadata.push(`// ${key.padEnd(maxKeyLength + 2)}${v}`);
+        scriptMetadata.push(metadataEntry(key, v));
       }
     } else {
-      scriptMetadata.push(`// ${key.padEnd(maxKeyLength + 2)}${value}`);
+      scriptMetadata.push(metadataEntry(key, value));
     }
   }
   // Explicit version number takes priority over the inferred one from package.json
   if (!("version" in metadataInfo || "@version" in metadataInfo)) {
     // Insert version number into 3rd line
-    scriptMetadata.splice(2, 0, `// ${"@version".padEnd(maxKeyLength + 2)}${config.version}`);
+    scriptMetadata.splice(2, 0, metadataEntry("@version", config.version));
   }
   // Insert default namespace entry into 4th line if not provided
   if (!("namespace" in metadataInfo || "@namespace" in metadataInfo)) {
-    scriptMetadata.splice(
-      3,
-      0,
-      `// ${"@namespace".padEnd(maxKeyLength + 2)}http://tampermonkey.net`,
-    );
+    scriptMetadata.splice(3, 0, metadataEntry("@namespace", "http://tampermonkey.net"));
   }
   scriptMetadata.push("// ==/UserScript==\n\n");
   contents = scriptMetadata.join("\n") + contents;
