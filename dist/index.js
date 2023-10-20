@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { stdout } from "node:process";
 import { compile as sasscompile } from "sass";
 const defaultConfig = {
@@ -9,17 +9,22 @@ const defaultConfig = {
   styleRaw: undefined,
   version: "1.0.0",
 };
-export async function userscriptify(content, options = undefined) {
+export function userscriptify(content, options = undefined) {
   const config = Object.assign({}, defaultConfig);
-  await applyPackageData(config);
+  applyPackageData(config);
   if (options) {
     // Options passed through loader script override settings in package.json
     applyOptions(config, options);
   }
-  return await insertCSS(content, config).then((contents) => insertMetadata(contents, config));
+  content = insertCSS(content, config);
+  content = insertMetadata(content, config);
+  return content;
 }
-async function applyPackageData(config) {
-  const packageData = await readFile("package.json", "utf8").then((file) => JSON.parse(file));
+export async function userscriptifyAsync(content, options = undefined) {
+  return userscriptify(content, options);
+}
+function applyPackageData(config) {
+  const packageData = JSON.parse(readFileSync("package.json", "utf8"));
   if ("userscriptify" in packageData) {
     const pkg = packageData.userscriptify;
     applyOptions(config, pkg);
@@ -35,10 +40,10 @@ function applyOptions(config, object) {
 function formatProp(header) {
   return header.startsWith("@") ? header : "@" + header;
 }
-async function insertMetadata(contents, config) {
+function insertMetadata(contents, config) {
   let metadataInfo;
   if (typeof config.metadata == "string") {
-    metadataInfo = await readFile(config.metadata.trim(), "utf8").then((file) => JSON.parse(file));
+    metadataInfo = JSON.parse(readFileSync(config.metadata.trim(), "utf8"));
   } else {
     metadataInfo = config.metadata;
   }
@@ -79,7 +84,7 @@ async function insertMetadata(contents, config) {
   contents = scriptMetadata.join("\n") + contents;
   return contents;
 }
-async function insertCSS(contents, config) {
+function insertCSS(contents, config) {
   // Check if CSS styles are provided
   if (config.style || config.styleRaw) {
     if (!contents.includes(config.replace)) {
@@ -93,7 +98,7 @@ async function insertCSS(contents, config) {
         cssArray = sasscompile(config.style).css.split("\n");
         console.log("Done");
       } else {
-        cssArray = await readFile(config.style, "utf8").then((input) => input.split("\n"));
+        cssArray = readFileSync(config.style, "utf8").split("\n");
       }
     } else if (config.styleRaw) {
       cssArray = config.styleRaw.split("\n");

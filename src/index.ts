@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { stdout } from "node:process";
 import { compile as sasscompile } from "sass";
 
@@ -25,19 +25,24 @@ const defaultConfig: UserScriptData = {
 };
 
 
-export async function userscriptify(content: string, options: undefined | Partial<USOptions> = undefined) {
+export function userscriptify(content: string, options: undefined | Partial<USOptions> = undefined) {
   const config = Object.assign({}, defaultConfig);
-  await applyPackageData(config);
+  applyPackageData(config);
   if (options) {
     // Options passed through loader script override settings in package.json
     applyOptions(config, options);
   }
-  return await insertCSS(content, config)
-    .then(contents => insertMetadata(contents, config));
+  content = insertCSS(content, config);
+  content = insertMetadata(content, config);
+  return content
 }
 
-async function applyPackageData(config: UserScriptData) {
-  const packageData = await readFile('package.json', 'utf8').then(file => JSON.parse(file));
+export async function userscriptifyAsync(content: string, options: undefined | Partial<USOptions> = undefined) {
+  return userscriptify(content, options);
+}
+
+function applyPackageData(config: UserScriptData) {
+  const packageData = JSON.parse(readFileSync("package.json", "utf8"));
   if ("userscriptify" in packageData) {
     const pkg = packageData.userscriptify as Partial<USOptions>;
     applyOptions(config, pkg);
@@ -56,10 +61,10 @@ function formatProp(header: string) {
   return header.startsWith("@") ? header : "@" + header;
 }
 
-async function insertMetadata(contents: string, config: UserScriptData) {
+function insertMetadata(contents: string, config: UserScriptData) {
   let metadataInfo;
   if (typeof config.metadata == "string") {
-    metadataInfo = await readFile(config.metadata.trim(), 'utf8').then(file => JSON.parse(file));
+    metadataInfo = JSON.parse(readFileSync(config.metadata.trim(), "utf8"));
   }
   else {
     metadataInfo = config.metadata;
@@ -101,7 +106,7 @@ async function insertMetadata(contents: string, config: UserScriptData) {
   return contents;
 }
 
-async function insertCSS(contents: string, config: UserScriptData) {
+function insertCSS(contents: string, config: UserScriptData) {
   // Check if CSS styles are provided
   if ((config.style || config.styleRaw)) {
     if (!contents.includes(config.replace)) {
@@ -116,7 +121,7 @@ async function insertCSS(contents: string, config: UserScriptData) {
         console.log("Done");
       }
       else {
-        cssArray = await readFile(config.style, "utf8").then(input => input.split("\n"));
+        cssArray = readFileSync(config.style, "utf8").split("\n");
       }
     }
     else if (config.styleRaw) {
