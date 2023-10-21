@@ -52,6 +52,10 @@ function insertMetadata(contents, config) {
   }
   if (!("name" in metadataInfo || "@name" in metadataInfo)) {
     throw new Error("Userscript metadata information must contain a name.");
+  } else {
+    console.log(
+      `Building userscript '${metadataInfo.name ? metadataInfo.name : metadataInfo["@name"]}'`,
+    );
   }
   const maxKeyLength = Object.keys(metadataInfo).reduce(
     (a, c) => Math.max(a, formatHeader(c).length),
@@ -96,6 +100,7 @@ function insertCSS(contents, config) {
     }
     let cssArray = [];
     if (config.styleRaw) {
+      // Overrides config.style
       cssArray = config.styleRaw.split("\n");
     } else if (config.style) {
       if (config.style.match(/\.s[ac]ss$/i)) {
