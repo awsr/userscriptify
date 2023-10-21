@@ -1,0 +1,7 @@
+{
+    "name": "New Userscript",
+    "description": "A script that does things and stuff",
+    "match": [
+        "https://*"
+    ]
+}
