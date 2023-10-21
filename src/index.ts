@@ -90,7 +90,7 @@ function insertMetadata(contents: string, config: UserScriptData) {
   const scriptMetadata = ["// ==UserScript=="];
   // eslint-disable-next-line prefer-const
   for (let [key, value] of Object.entries(metadataInfo)) {
-    if (!value) continue;
+    if (!value || key === "$schema") continue;
 
     key = formatHeader(key);
     if (Array.isArray(value)) {
