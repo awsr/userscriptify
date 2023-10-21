@@ -128,7 +128,9 @@ Type: `string`
 
 Default: `undefined`
 
-If set, the path to a CSS file containing the style information you want to insert. If using SASS/SCSS or something similar, one setup would be to put it in the path here and then have a build script like the one shown in [template/buildSCSS.mjs](template/buildSCSS.mjs).
+If set, the path to a CSS file containing the style information you want to insert.
+
+If using SASS/SCSS or something similar, one possible setup would be to put it in the path here and then have a build script like the one shown in [template/buildSCSS.mjs](template/buildSCSS.mjs).
 
 ### styleRaw
 
