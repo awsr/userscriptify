@@ -1,6 +1,4 @@
 import { readFileSync } from "node:fs";
-import { stdout } from "node:process";
-import { compile as sasscompile } from "sass";
 
 
 export interface UserscriptifyOptions {
@@ -140,14 +138,7 @@ function insertCSS(contents: string, config: UserScriptData) {
       cssArray = config.styleRaw.split("\n");
     }
     else if (config.style) {
-      if (config.style.match(/\.s[ac]ss$/i)) {
-        stdout.write("Compiling SASS/SCSS... ");
-        cssArray = sasscompile(config.style).css.split("\n");
-        console.log("Done");
-      }
-      else {
-        cssArray = readFileSync(config.style, "utf8").split("\n");
-      }
+      cssArray = readFileSync(config.style, "utf8").split("\n");
     }
 
     // TODO: Auto-detect indentation
